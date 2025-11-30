@@ -19,6 +19,7 @@ router.get("/", (req, res) => {
         endpoints: {
             auth: {
                 "POST /login": "Iniciar sesión y obtener token JWT (requiere email y password)",
+                "POST /register": "Registrar nuevo usuario (público - no requiere auth)",
             },
             users: {
                 "GET /user": "Obtener todos los usuarios (Requiere Auth)",

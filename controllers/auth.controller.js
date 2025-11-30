@@ -71,6 +71,81 @@ class AuthController {
       next(error);
     }
   }
+
+  async register(req, res, next) {
+    try {
+      const { email, password, firstName, lastName } = req.body;
+
+      if (!email || !password || !firstName || !lastName) {
+        return res.status(400).json({
+          success: false,
+          message: "Email, contraseña, nombre y apellido son requeridos",
+        });
+      }
+
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        return res.status(400).json({
+          success: false,
+          message: "Formato de email inválido",
+        });
+      }
+
+      if (password.length < 6) {
+        return res.status(400).json({
+          success: false,
+          message: "La contraseña debe tener al menos 6 caracteres",
+        });
+      }
+
+      const existingUser = await User.findByEmail(email);
+      if (existingUser) {
+        return res.status(400).json({
+          success: false,
+          message: "El email ya está registrado",
+        });
+      }
+
+      const newUser = await User.create({
+        email,
+        password,
+        firstName,
+        lastName,
+        role: "user",
+        isActive: true,
+      });
+
+      // Generar token automáticamente para login
+      const token = jwt.sign(
+        {
+          id: newUser.id,
+          email: newUser.email,
+          role: newUser.role,
+        },
+        process.env.JWT_SECRET,
+        {
+          expiresIn: process.env.JWT_EXPIRES_IN || "8h",
+        }
+      );
+
+      res.status(201).json({
+        success: true,
+        message: "Usuario registrado exitosamente",
+        data: {
+          token,
+          user: {
+            id: newUser.id,
+            email: newUser.email,
+            firstName: newUser.first_name,
+            lastName: newUser.last_name,
+            role: newUser.role,
+          },
+        },
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 module.exports = new AuthController();
