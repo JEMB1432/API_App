@@ -77,6 +77,85 @@ class MeasurementController {
       next(error);
     }
   }
+
+  async updateMeasurement(req, res, next) {
+    try {
+      const { id } = req.params;
+      const { decibels, latitude, longitude, locationName } = req.body;
+
+      const measurement = await Measurement.findById(id);
+      if (!measurement) {
+        return res.status(404).json({
+          success: false,
+          message: "Medición no encontrada",
+        });
+      }
+
+      if (req.user.role !== "admin" && measurement.user_id !== req.user.id) {
+        return res.status(403).json({
+          success: false,
+          message: "No tienes permisos para modificar esta medición",
+        });
+      }
+
+      if (decibels !== undefined) {
+        if (typeof decibels !== "number" || decibels < 0) {
+          return res.status(400).json({
+            success: false,
+            message: "El campo 'decibels' debe ser un número positivo",
+          });
+        }
+      }
+
+      const updateData = {
+        decibels,
+        latitude,
+        longitude,
+        locationName,
+      };
+
+      const updatedMeasurement = await Measurement.update(id, updateData);
+
+      res.status(200).json({
+        success: true,
+        message: "Medición actualizada exitosamente",
+        data: updatedMeasurement,
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async deleteMeasurement(req, res, next) {
+    try {
+      const { id } = req.params;
+
+      // Verificar que la medición existe
+      const measurement = await Measurement.findById(id);
+      if (!measurement) {
+        return res.status(404).json({
+          success: false,
+          message: "Medición no encontrada",
+        });
+      }
+
+      if (req.user.role !== "admin" && measurement.user_id !== req.user.id) {
+        return res.status(403).json({
+          success: false,
+          message: "No tienes permisos para eliminar esta medición",
+        });
+      }
+
+      await Measurement.delete(id);
+
+      res.status(200).json({
+        success: true,
+        message: "Medición eliminada exitosamente",
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 module.exports = new MeasurementController();

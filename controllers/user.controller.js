@@ -3,6 +3,13 @@ const User = require("../models/User");
 class UserController {
   async getAllUsers(req, res, next) {
     try {
+      if (req.user.role !== "admin") {
+        return res.status(403).json({
+          success: false,
+          message: "No tienes permisos para ver todos los usuarios",
+        });
+      }
+
       const users = await User.findAll();
 
       res.status(200).json({
@@ -111,13 +118,23 @@ class UserController {
       const { id } = req.params;
       const { firstName, lastName, role, isActive, password } = req.body;
 
+      if (req.user.role !== "admin" && req.user.id !== id) {
+        return res.status(403).json({
+          success: false,
+          message: "No tienes permisos para modificar este usuario",
+        });
+      }
+
       const userData = {
         firstName,
         lastName,
-        role,
-        isActive,
         password,
       };
+
+      if (req.user.role === "admin") {
+        userData.role = role;
+        userData.isActive = isActive;
+      }
 
       const updatedUser = await User.updateUser(id, userData);
 
@@ -135,10 +152,10 @@ class UserController {
     try {
       const { id } = req.params;
 
-      if (req.user && req.user.id === id) {
-        return res.status(400).json({
+      if (req.user.role !== "admin" && req.user.id !== id) {
+        return res.status(403).json({
           success: false,
-          message: "No puedes eliminar tu propio usuario",
+          message: "No tienes permisos para eliminar este usuario",
         });
       }
 

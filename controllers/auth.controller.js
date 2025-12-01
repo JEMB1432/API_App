@@ -115,7 +115,6 @@ class AuthController {
         isActive: true,
       });
 
-      // Generar token automáticamente para login
       const token = jwt.sign(
         {
           id: newUser.id,
